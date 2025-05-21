@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>科学文献管理系统</title>
+        <link rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <div class="container">
+            <div class="logo">文献管理系统</div>
+
+            <!-- 四个主功能按钮 -->
+            <div id="main-buttons" class="button-container">
+                <div>统计文章个数：2394237</div>
+                <div>统计作者个数：1839106</div>
+                <button id="basic-search-btn">基本搜索功能</button>
+                <button id="partial-match-search-btn">部分匹配搜索</button>
+                <button id="stats-btn">统计功能</button>
+            </div>
+
+            <!-- 搜索输入区域 -->
+            <div id="input-container" class="input-container"
+                style="display: none;">
+                <form action="/search" method="POST">
+                    <div id="options" class="options" style="display: none;">
+                        <label class="option">
+                            <input type="radio" name="search-type"
+                                value="author" checked> 作者
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="search-type"
+                                value="paper"> 论文
+                        </label>
+                    </div>
+                    <div class="search-form">
+                        <input type="text" id="search-input" name="query"
+                            class="search-input" placeholder="请输入查询内容..." />
+                        <button class="search-button" type="submit">搜索</button>
+                    </div>
+                </form>
+                <br>
+                <button class="back-button"
+                    onclick="backToMainButtons()">返回</button>
+            </div>
+
+            <!-- 部分匹配搜索输入区域 -->
+            <div id="partial-search-container" class="input-container"
+                style="display: none;">
+                <form id="partial-search-form" method="post"
+                    action="/partial-match">
+                    <input type="text" name="keywords"
+                        placeholder="请输入关键词" required>
+                    <button type="submit">搜索</button>
+                </form><br>
+                <button class="back-button"
+                    onclick="backToMainButtons()">返回</button>
+            </div>
+
+            <!-- 统计功能按钮区域 -->
+            <div id="stats-buttons" class="button-container"
+                style="display: none;">
+                <button onclick="showStatsInput('author')">作者统计功能</button>
+                <button onclick="showStatsInput('hotspot')">热点分析功能</button>
+                <button onclick="showStatsInput('clique')">聚团分析</button>
+                <button class="back-button"
+                    onclick="backToMainButtons()">返回</button>
+            </div>
+
+            <!-- 统计搜索输入区域 -->
+            <div id="stats-input-container" style="display: none;"
+                class="input-container">
+
+                <!-- 聚团数量信息（默认隐藏） -->
+                <p id="group-info" style="display: none;">
+                    <strong>共形成 35763 个聚团</strong>
+                </p>
+
+                <form id="stats-form" method="get">
+                    <input type="number" name="n" id="stats-input" placeholder
+                        required>
+                    <button type="submit">查询</button>
+                </form><br>
+
+                <div class="button-container">
+                    <button class="back-button"
+                        onclick="backToStatsButtons()">返回统计功能菜单</button>
+                </div>
+            </div>
+
+            <!-- 展示结果区域 -->
+            {% if results %}
+            <div class="results-box">
+                <h3>查询结果：</h3>
+                <div class="scroll-box">
+                    {% if search_type=="paper" %}
+                    <!-- 作品名搜索结果展示 -->
+                    <ul>
+                        {% for item in results %}
+                        <li>
+                            <strong>标题：</strong> {{ item.title }}<br>
+                            <strong>作者：</strong> {{ item.authors | join(', ')
+                            }}<br>
+                            <strong>年份：</strong> {{ item.year }}<br>
+                            <strong>页码：</strong> {{ item.pages }}<br>
+                            <strong>书名：</strong> {{ item.booktitle }}<br>
+                            <strong>URL：</strong>
+                            {% for url in item.urls %}
+                            <a href="{{ url }}" target="_blank">{{ url
+                                }}</a><br>
+                            {% endfor %}
+                            <strong>电子版：</strong>
+                            {% if item.ee %}
+                            <a href="{{ item.ee }}" target="_blank">{{ item.ee
+                                }}</a>
+                            {% else %}
+                            无
+                            {% endif %}
+                            <br>
+                            <strong>查找耗时：</strong> {{ item.search_time }} 秒
+                        </li>
+                        <hr>
+                        {% endfor %}
+                        <div class="button-container">
+                            <button class="back-button"
+                                onclick="backToBasicSearch()">返回搜索菜单</button>
+                        </div>
+                    </ul>
+
+                    {% elif search_type=="author" %}
+                    <!-- 作者搜索结果展示 -->
+                    <ul>
+                        {% for item in results %}
+                        <li>
+                            <strong>作者：</strong> {{ item.author }}<br>
+                            <strong>发表作品：</strong>
+                            <ul>
+                                {% for title in item.titles %}
+                                <li>{{ title }}</li>
+                                {% endfor %}
+                            </ul>
+                            <strong>合作作者：</strong> {{ item.cos | join(', ') }}
+                            <br>
+                            <strong>查找耗时：</strong> {{ item.search_time }} 秒
+                        </li>
+                        <hr>
+                        {% endfor %}
+                        <div class="button-container">
+                            <button class="back-button"
+                                onclick="backToBasicSearch()">返回搜索菜单</button>
+                        </div>
+                    </ul>
+
+                    {% elif search_type == "partial" %}
+                    <!-- 部分匹配搜索结果展示 -->
+                    <ul>
+                        {% for item in results %}
+                        <li>
+                            <strong>{{ loop.index }}: {{ item.title }}</strong>
+                            <br>
+                        </li>
+                        <hr>
+                        {% endfor %}
+                    </ul>
+                    <div class="button-container">
+                        <button class="back-button"
+                            onclick="backToPartialSearch()">返回部分匹配搜索</button>
+                    </div>
+
+                    {% elif search_type == "stats" %}
+                    <!-- 统计结果展示 -->
+                    <ul>
+                        {% for item in results %}
+                        <li>
+                            <strong>{{ item.num }}：{{ item.val }}</strong>
+                        </li>
+                        <hr>
+                        {% endfor %}
+                        <br>
+                        <strong>查找耗时：</strong> {{ search_time }} 秒
+                    </ul>
+                    <div class="button-container">
+                        <button class="back-button"
+                            onclick="backToStatsSearchButtons()">返回统计搜索菜单</button>
+                    </div>
+
+                    {% else %}
+                    <p>没有识别到结构化结果。</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </body>
+</html>
