@@ -1,1 +1,2 @@
-# Scientific-Literature-Management-System
+数据结构大作业<br>
+科学文献管理系统，没有数据，数据集为dblp.xml
